@@ -39,6 +39,12 @@ export default function App() {
     data: new Date(2026, 2, 10), // 10/03/2026
     valor: 350,
     status: "agendada",
+    historico: [
+      {
+        status: "agendada",
+        data: new Date(),
+      }
+    ],
     observacoes: "Consulta de rotina",
   });
 
@@ -47,6 +53,10 @@ export default function App() {
     setConsulta({
       ...consulta,
       status: "confirmada",
+      historico: [
+        ...consulta.historico,
+        { status: "confirmada", data: new Date() }
+      ],
     });
   }
 
@@ -54,6 +64,10 @@ export default function App() {
     setConsulta({
       ...consulta,
       status: "cancelada",
+      historico: [
+        ...consulta.historico,
+        { status: "cancelada", data: new Date() }
+      ],
     });
   }
 
@@ -121,6 +135,15 @@ export default function App() {
             )}
           </View>
 
+          <View style={styles.secao}>
+            <Text style={styles.label}>Histórico</Text>
+            {consulta.historico.map((item, index) => (
+              <Text key={index}>
+                {item.status} - {formatarData(item.data)}
+              </Text>
+            ))}
+          </View>
+
           {/* Botões de Ação */}
           <View style={styles.acoes}>
             {consulta.status === "agendada" && (
@@ -161,7 +184,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#79059C",
+    backgroundColor: "#a8e2da",
   },
   scrollContent: {
     padding: 20,
@@ -220,7 +243,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#79059C",
+    color: "#000000",
     marginBottom: 8,
   },
   valor: {
