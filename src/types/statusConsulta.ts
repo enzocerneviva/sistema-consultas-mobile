@@ -1,5 +1,6 @@
-export type StatusConsulta =
-  | "agendada"
-  | "confirmada"
-  | "cancelada"
-  | "realizada";
+export enum StatusConsulta {
+  agendada = "agendada",
+  confirmada = "confirmada",
+  cancelada = "cancelada",
+  realizada = "realizada"
+}

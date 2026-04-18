@@ -1,11 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Button, ScrollView } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Especialidade } from "./src/types/especialidade";
 import { Paciente } from "./src/types/paciente";
 import { Medico } from "./src/interfaces/medico";
-import { Consulta } from "./src/interfaces/consulta";
+import { Consulta } from './src/interfaces/consulta';
+import { StatusConsulta } from "./src/types/statusConsulta";
+
+const STORAGE_KEY = "@consultas:consulta_atual";
 
 export default function App() {
   // Dados base (simulando o que tínhamos no backend)
@@ -38,37 +42,47 @@ export default function App() {
     paciente: paciente1,
     data: new Date(2026, 2, 10), // 10/03/2026
     valor: 350,
-    status: "agendada",
+    status: StatusConsulta.agendada,
     historico: [
       {
-        status: "agendada",
+        status: StatusConsulta.agendada,
         data: new Date(),
       }
     ],
     observacoes: "Consulta de rotina",
   });
 
+  useEffect(() => {
+    salvarConsulta(consulta);
+  }, [consulta]);
+
   // Funções para manipular a consulta
   function confirmarConsulta() {
-    setConsulta({
+    const novaConsulta = {
       ...consulta,
-      status: "confirmada",
+      status: StatusConsulta.confirmada,
       historico: [
         ...consulta.historico,
-        { status: "confirmada", data: new Date() }
+        { status: StatusConsulta.confirmada, data: new Date() }
       ],
-    });
+    };
+
+    setConsulta(novaConsulta);
+    salvarConsulta(novaConsulta);
   }
 
   function cancelarConsulta() {
-    setConsulta({
+    const novaConsulta = {
       ...consulta,
-      status: "cancelada",
+      status: StatusConsulta.cancelada,
       historico: [
         ...consulta.historico,
-        { status: "cancelada", data: new Date() }
+        { status: StatusConsulta.cancelada, data: new Date() }
       ],
-    });
+    };
+
+    setConsulta(novaConsulta);
+    salvarConsulta(novaConsulta);
   }
 
   // Função para formatar valor em reais
@@ -82,6 +96,45 @@ export default function App() {
   // Função para formatar data
   function formatarData(data: Date): string {
     return data.toLocaleDateString("pt-BR");
+  }
+
+  async function salvarConsulta(consultaAtualizada: Consulta) {
+    try {
+      await AsyncStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(consultaAtualizada)
+      )
+    } catch (erro) {
+
+      console.error("Erro ao salvar: ", erro)
+    
+    }
+  }
+
+  async function carregarConsulta() {
+    try {
+      const dados = await AsyncStorage.getItem(STORAGE_KEY)
+      if (dados) {
+        const consultaObj = JSON.parse(dados);
+
+        consultaObj.data = new Date(consultaObj.data);
+
+        consultaObj.status = consultaObj.status as StatusConsulta;
+
+        consultaObj.historico = (consultaObj.historico || []).map((item: any) => ({
+          ...item,
+          data: new Date(item.data),
+          status: item.status as StatusConsulta,
+        }));
+
+        setConsulta(consultaObj);
+      }
+
+    } catch (erro) {
+      
+      console.error("Erro ao carregar: ", erro);
+
+    }
   }
 
   return (
@@ -100,8 +153,8 @@ export default function App() {
           {/* Status Badge */}
           <View style={[
             styles.statusBadge,
-            consulta.status === "confirmada" && styles.statusConfirmada,
-            consulta.status === "cancelada" && styles.statusCancelada,
+            consulta.status === StatusConsulta.confirmada && styles.statusConfirmada,
+            consulta.status === StatusConsulta.cancelada && styles.statusCancelada,
           ]}>
             <Text style={styles.statusTexto}>{consulta.status.toUpperCase()}</Text>
           </View>
